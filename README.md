@@ -2,17 +2,18 @@
 MCP23017 lib for mbed
 
 #Code example
+
 '''
-#include "mbed.h"
-#include "MCP23017.h" // include 16-bit parallel I/O header file 
+\#include "mbed.h"
+\#include "MCP23017.h" // include 16-bit parallel I/O header file 
 
 
-#define COLLECT_LED PB_1
-#define CHARGE_LED PB_2
-#define BTN_INT_PIN PA_0
-#define COLLECT_BTN PC_13
-#define CHARGE_BTN PB_7
-#define MDM_RELEY PA_1
+\#define COLLECT_LED PB_1
+\#define CHARGE_LED PB_2
+\#define BTN_INT_PIN PA_0
+\#define COLLECT_BTN PC_13
+\#define CHARGE_BTN PB_7
+\#define MDM_RELEY PA_1
 
 
 
@@ -37,47 +38,46 @@ volatile unsigned short intcap;
 volatile unsigned short intport;
 
 void pr(void)
-{
+\{
     isr_done = true;
     event.set(0x01);
-}
+\}
 
 void pwm_thread()
-{
+\{
     modem.period(0.01f);  // 4 second period
     modem.pulsewidth_ms(1); // 2 second pulse (on)
     while(true)
-    {
+    \{
             wait(0.5);
             if(charge == 1)
-            {
+            \{
                 charge = 0;
-            }
+            \}
             else
-            {
+            \{
                 charge = 1;
-            }
-    }
-}
+            \}
+    \}
+\}
 
 void int_thread(void)
-{
+\{
     while (true)
-    {
+    \{
         event.wait_all(0x01);
-        
         if(collect == 1)
-        {
+        \{
             collect = 0;
-        }
+        \}
         else
-        {
+        \{
             collect = 1;
-        }
-    }
-}
+        \}
+    \}
+\}
 
-int main(void)
+int main\(void\)
 {
     pc.baud(115200);
     key_pressed_int.rise(pr);
@@ -98,9 +98,9 @@ int main(void)
     
 
     while(true)
-    {
+    \{
         if(isr_done)
-        {
+        \{
             intfl = port.readRegister(INTF);
             intcap = port.readRegister(INTCAP);
             intport = port.digitalWordRead();
@@ -109,9 +109,9 @@ int main(void)
             pc.printf("INTCAP = %d\n",intcap);
             pc.printf("PORT = %d\n",intport);
             isr_done = false;
-        }
+        \}
             port.digitalWordRead();
-    }
-}
+    \}
+\}
 
 '''
