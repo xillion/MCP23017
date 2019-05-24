@@ -17,8 +17,6 @@ MCP23017 lib for mbed
 
 
 
-Thread thread1;
-Thread thread2;
 EventFlags event;
 
 Serial pc(USBTX, USBRX);
@@ -73,7 +71,7 @@ int main(void)
      * @param   polarity_config    polarity value (1 = flip, 0 = normal)
      */           
 
-    port.config(0xFFFF, 0xFFFF, 0x0000);
+    port.portConfig(0xFFFF, 0xFFFF, 0x0000);
     port.IOCONConfig(MASK_ITNPOL+MASK_MIRROR);
     port.interruptConfig(0xFFFF, 0xFFFF);
     port.enableInterrupts(0x0300);
@@ -84,7 +82,7 @@ int main(void)
     {
         if(isr_done)
         {
-            port.ackInterrupts(ref_intfl, ref_intcap);
+            port.ackInterrupt(ref_intfl, ref_intcap);
             intport = port.digitalWordRead();
             pc.printf("%s","interrup \n");
             pc.printf("INTF = %d\n",intfl);
@@ -95,5 +93,4 @@ int main(void)
             //port.digitalWordRead();
     }
 }
-
 ```
