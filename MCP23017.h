@@ -111,7 +111,7 @@ public:
      * @param   i2cAddress  I2C address
      * @param   i2cSpeed    I2C speed
      */
-    MCP23017(PinName sda, PinName scl, int i2cAddress, int i2cSpeed);
+    MCP23017(PinName sda, PinName scl, int i2cAddress, Frequency freq = Frequency_400KHz);
 
     /** Reset MCP23017 device to its power-on state
      */    

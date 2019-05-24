@@ -22,9 +22,9 @@
 /*-----------------------------------------------------------------------------
  * PinName pin
  */
-MCP23017::MCP23017(PinName sda, PinName scl, int i2cAddress, int i2cSpeed=400000)  : _i2c(sda, scl) {
+MCP23017::MCP23017(PinName sda, PinName scl, int i2cAddress, Frequency freq)  : _i2c(sda, scl) {
     MCP23017_i2cAddress = i2cAddress;
-    _i2c.frequency(i2cSpeed);
+    _i2c.frequency((int)freq);
     reset();                                  // initialise chip to power-on condition
 }
 
@@ -265,17 +265,17 @@ void MCP23017::internalPullupMask(unsigned short mask)
 
 void MCP23017::disableInterrupts ( unsigned short mask )
 {
-    shadow_GPINTEN &= ~pins;
+    shadow_GPINTEN &= ~mask;
     writeRegister(GPINTEN, shadow_GPINTEN); //Interrupt enable
 }
 
 void MCP23017::enableInterrupts ( unsigned short mask )
 {
-    shadow_GPINTEN |= pins;
+    shadow_GPINTEN |= mask;
     writeRegister(GPINTEN, shadow_GPINTEN); //Interrupt enable
 }
 
-void ackInterrupt ( unsigned short &pin, unsigned short &values )
+void MCP23017::ackInterrupt ( unsigned short &pin, unsigned short &values )
 {
     pin = readRegister(INTF);
     values = readRegister(INTCAP);
