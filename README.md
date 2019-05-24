@@ -1,19 +1,19 @@
 # MCP23017
 MCP23017 lib for mbed
 
-#Code example
+## Code example
 
 ```cpp
-\#include "mbed.h"
-\#include "MCP23017.h" // include 16-bit parallel I/O header file 
+#include "mbed.h"
+#include "MCP23017.h" // include 16-bit parallel I/O header file 
 
 
-\#define COLLECT_LED PB_1
-\#define CHARGE_LED PB_2
-\#define BTN_INT_PIN PA_0
-\#define COLLECT_BTN PC_13
-\#define CHARGE_BTN PB_7
-\#define MDM_RELEY PA_1
+#define COLLECT_LED PB_1
+#define CHARGE_LED PB_2
+#define BTN_INT_PIN PA_0
+#define COLLECT_BTN PC_13
+#define CHARGE_BTN PB_7
+#define MDM_RELEY PA_1
 
 
 
@@ -33,32 +33,11 @@ DigitalOut collect(COLLECT_LED);
 PwmOut modem(MDM_RELEY);
 
 bool isr_done = false;
-volatile unsigned short intfl;
-volatile unsigned short intcap;
-volatile unsigned short intport;
 
 void pr(void)
 {
     isr_done = true;
     event.set(0x01);
-}
-
-void pwm_thread()
-{
-    modem.period(0.01f);  // 4 second period
-    modem.pulsewidth_ms(1); // 2 second pulse (on)
-    while(true)
-    {
-            wait(0.5);
-            if(charge == 1)
-            {
-                charge = 0;
-            }
-            else
-            {
-                charge = 1;
-            }
-    }
 }
 
 void int_thread(void)
@@ -81,8 +60,11 @@ int main(void)
 {
     pc.baud(115200);
     key_pressed_int.rise(pr);
-    thread1.start(pwm_thread);
-    //thread2.start(int_thread);
+    unsigned short intfl;
+    unsigned short intcap;
+    unsigned short intport;
+    unsigned short  &ref_intfl = intfl;
+    unsigned short  &ref_intcap = intcap;
 
     /** Configure an MCP23017 device
      *
@@ -93,7 +75,8 @@ int main(void)
 
     port.config(0xFFFF, 0xFFFF, 0x0000);
     port.IOCONConfig(MASK_ITNPOL+MASK_MIRROR);
-    port.interruptConfig(0x0300, 0xFFFF, 0xFFFF);
+    port.interruptConfig(0xFFFF, 0xFFFF);
+    port.enableInterrupts(0x0300);
     
     
 
@@ -101,8 +84,7 @@ int main(void)
     {
         if(isr_done)
         {
-            intfl = port.readRegister(INTF);
-            intcap = port.readRegister(INTCAP);
+            port.ackInterrupts(ref_intfl, ref_intcap);
             intport = port.digitalWordRead();
             pc.printf("%s","interrup \n");
             pc.printf("INTF = %d\n",intfl);
@@ -110,7 +92,7 @@ int main(void)
             pc.printf("PORT = %d\n",intport);
             isr_done = false;
         }
-            port.digitalWordRead();
+            //port.digitalWordRead();
     }
 }
 
