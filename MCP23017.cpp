@@ -22,11 +22,6 @@
 /*-----------------------------------------------------------------------------
  * PinName pin
  */
-MCP23017::MCP23017(PinName sda, PinName scl, int i2cAddress)  : _i2c(sda, scl) {
-    MCP23017_i2cAddress = i2cAddress;
-    reset();                                  // initialise chip to power-on condition
-}
-
 MCP23017::MCP23017(PinName sda, PinName scl, int i2cAddress, int i2cSpeed=400000)  : _i2c(sda, scl) {
     MCP23017_i2cAddress = i2cAddress;
     _i2c.frequency(i2cSpeed);
@@ -59,6 +54,7 @@ void MCP23017::reset() {
     shadow_GPIO  = 0;
     shadow_GPPU  = 0;
     shadow_IPOL  = 0;
+    shadow_GPINTEN = 0;
 }
 
 /*-----------------------------------------------------------------------------
@@ -97,37 +93,6 @@ int  MCP23017::read_bit(int bit_number) {
 int  MCP23017::read_mask(unsigned short mask) {
     shadow_GPIO = readRegister(GPIO);
     return (shadow_GPIO & mask);
-}
-
-/*-----------------------------------------------------------------------------
- * Config
- * set direction and pull-up registers
- */
-void MCP23017::config(unsigned short dir_config, unsigned short pullup_config,  unsigned short polarity_config) {
-    shadow_IODIR = dir_config;
-    writeRegister(IODIR, (unsigned short)shadow_IODIR);
-    shadow_GPPU = pullup_config;
-    writeRegister(GPPU, (unsigned short)shadow_GPPU);
-    shadow_IPOL = polarity_config;
-    writeRegister(IPOL, (unsigned short)shadow_IPOL);
-}
-
-void MCP23017::interruptConfig(unsigned short interrupt_enable, unsigned short compare_value, unsigned short interrupt_ctrl)
-{
-    writeRegister(GPINTEN, interrupt_enable); //Interrupt enable
-    writeRegister(DEFVAL,  compare_value); //Compare value
-    writeRegister(INTCON,  interrupt_ctrl);
-}
-
-void MCP23017::IOCONConfig(unsigned char IOCON_value)
-{
-    union {
-        uint8_t  value8[2];
-        uint16_t value16;
-    } tmp_data;
-    tmp_data.value8[0] = IOCON_value;
-    tmp_data.value8[1] = IOCON_value;
-    writeRegister(IOCON,   tmp_data.value16);
 }
 
 /*-----------------------------------------------------------------------------
@@ -255,11 +220,63 @@ void MCP23017::inputOutputMask(unsigned short mask) {
     writeRegister(IODIR, (unsigned short)shadow_IODIR);
 }
 
+void MCP23017::interruptConfig(unsigned short compare_value, unsigned short interrupt_ctrl)
+{
+    writeRegister(DEFVAL,  compare_value); //Compare value
+    writeRegister(INTCON,  interrupt_ctrl);
+}
+
+/*-----------------------------------------------------------------------------
+ * Config
+ * set direction and pull-up registers
+ */
+void MCP23017::portConfig(unsigned short dir_config, unsigned short pullup_config,  unsigned short polarity_config) {
+    shadow_IODIR = dir_config;
+    writeRegister(IODIR, (unsigned short)shadow_IODIR);
+    shadow_GPPU = pullup_config;
+    writeRegister(GPPU, (unsigned short)shadow_GPPU);
+    shadow_IPOL = polarity_config;
+    writeRegister(IPOL, (unsigned short)shadow_IPOL);
+}
+
+/*-----------------------------------------------------------------------------
+ * IOCONConfig
+ * Configure IOCON register
+ */
+void MCP23017::IOCONConfig(unsigned char IOCON_value)
+{
+    union {
+        uint8_t  value8[2];
+        uint16_t value16;
+    } tmp_data;
+    tmp_data.value8[0] = IOCON_value;
+    tmp_data.value8[1] = IOCON_value;
+    writeRegister(IOCON,   tmp_data.value16);
+}
+
 /*-----------------------------------------------------------------------------
  * internalPullupMask
  */
-void MCP23017::internalPullupMask(unsigned short mask) {
+void MCP23017::internalPullupMask(unsigned short mask)
+{
     shadow_GPPU = mask;
     writeRegister(GPPU, (unsigned short)shadow_GPPU);
 }
 
+void MCP23017::disableInterrupts ( unsigned short mask )
+{
+    shadow_GPINTEN &= ~pins;
+    writeRegister(GPINTEN, shadow_GPINTEN); //Interrupt enable
+}
+
+void MCP23017::enableInterrupts ( unsigned short mask )
+{
+    shadow_GPINTEN |= pins;
+    writeRegister(GPINTEN, shadow_GPINTEN); //Interrupt enable
+}
+
+void ackInterrupt ( unsigned short &pin, unsigned short &values )
+{
+    pin = readRegister(INTF);
+    values = readRegister(INTCAP);
+}

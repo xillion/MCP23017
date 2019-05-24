@@ -74,6 +74,34 @@
  */
 class MCP23017 {
 public:
+
+    enum Frequency {
+        Frequency_100KHz = 100000,
+        Frequency_400KHz = 400000,
+        /* Note: 1.7MHz probably won't work for mbed */
+        Frequency_1700KHz = 1700000
+    };
+    enum Pin {
+        Pin_PA0 = 0x0001,
+        Pin_PA1 = 0x0002,
+        Pin_PA2 = 0x0004,
+        Pin_PA3 = 0x0008,
+        Pin_PA4 = 0x0010,
+        Pin_PA5 = 0x0020,
+        Pin_PA6 = 0x0040,
+        Pin_PA7 = 0x0080,
+
+        Pin_PB0 = 0x0100,
+        Pin_PB1 = 0x0200,
+        Pin_PB2 = 0x0400,
+        Pin_PB3 = 0x0800,
+        Pin_PB4 = 0x1000,
+        Pin_PB5 = 0x2000,
+        Pin_PB6 = 0x4000,
+        Pin_PB7 = 0x8000,
+        Pin_All = 0xFFFF
+
+    };
     /** Constructor for the MCP23017 connected to specified I2C pins at a specific address
      *
      * 16-bit I/O expander with I2C interface
@@ -81,8 +109,8 @@ public:
      * @param   sda         I2C data pin
      * @param   scl         I2C clock pin
      * @param   i2cAddress  I2C address
+     * @param   i2cSpeed    I2C speed
      */
-    MCP23017(PinName sda, PinName scl, int i2cAddress);
     MCP23017(PinName sda, PinName scl, int i2cAddress, int i2cSpeed);
 
     /** Reset MCP23017 device to its power-on state
@@ -123,8 +151,14 @@ public:
      * @param   pullup_config      100k pullup value (1 = enabled, 0 = disabled)
      * @param   polarity_config    polarity value (1 = flip, 0 = normal)
      */           
-    void config(unsigned short dir_config, unsigned short pullup_config, unsigned short polarity_config);
-    void interruptConfig(unsigned short interrupt_enable, unsigned short compare_value, unsigned short interrupt_ctrl);
+    void portConfig(unsigned short dir_config, unsigned short pullup_config, unsigned short polarity_config);
+    /** Configure an interrupts of MCP23017 device
+     *
+     * @param   compare_value       compare value (1/0)
+     * @param   interrupt_ctrl      interrupt ctrl (1 = on campare, 0 = on change)
+     */ 
+    void interruptConfig(unsigned short compare_value, unsigned short interrupt_ctrl);
+    
     void IOCONConfig(unsigned char IOCON_value);
 
     void writeRegister(int regAddress, unsigned char  val);
@@ -156,11 +190,30 @@ public:
     void internalPullupMask(unsigned short mask);
     int read(void);
     void write(int data);
+    /** Disables interrupts for the specified pins.
+     *
+     * @param values A bitmask indicating which interrupts should be disabled.
+     */
+    void disableInterrupts ( unsigned short mask );
+    /** Enables interrupts for the specified pins.
+     *
+     * @param values A bitmask indicating which interrupts should be enabled.
+     */
+    void enableInterrupts ( unsigned short mask );
+    /** Acknowledge a generated interrupt.
+     *
+     * This function must be called when an interrupt is generated to discover
+     * which pin caused the interrupt and to enable future interrupts.
+     *
+     * @param pin An output paramter that specifies which pin generated the interrupt.
+     * @param values The current state of the input pins.
+     */
+    void ackInterrupt( unsigned short &pin, unsigned short &values );
 
 private:
     I2C     _i2c;
     int     MCP23017_i2cAddress;                        // physical I2C address
-    unsigned short   shadow_GPIO, shadow_IODIR, shadow_GPPU, shadow_IPOL;     // Cached copies of the register values
+    unsigned short   shadow_GPIO, shadow_IODIR, shadow_GPPU, shadow_IPOL, shadow_GPINTEN;     // Cached copies of the register values
     
 };
 
